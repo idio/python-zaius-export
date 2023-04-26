@@ -11,10 +11,11 @@ def init_s3_client(auth_struct):
     initializes a s3 client for multiprocessing workers
     """
     auth_struct = auth_struct if auth_struct is not None else auth.default()
-    return boto3.client("s3",
-                        aws_access_key_id=auth_struct["aws_access_key_id"],
-                        aws_secret_access_key=auth_struct["aws_secret_access_key"]
-                        )
+    return boto3.client(
+        "s3",
+        aws_access_key_id=auth_struct["aws_access_key_id"],
+        aws_secret_access_key=auth_struct["aws_secret_access_key"],
+    )
 
 
 def download_from_s3(auth_struct, bucket, local_path, key):
@@ -35,7 +36,7 @@ def par_s3_download(auth_struct, bucket, keys, local_path):
     """
     f = partial(download_from_s3, auth_struct, bucket, local_path)
     cores = cpu_count()
-    
+
     with Pool(cores) as p:
         p.map(f, keys)
 
@@ -49,9 +50,9 @@ def upload_to_s3(auth_struct, local_path, bucket, key):
     client.upload_file(local_path, bucket, key)
 
 
-def list_objects(auth_struct, bucket, prefix):
+def list_objects(auth_struct, **kwargs):
     """
     lists objects found at an s3_url
     """
     client = init_s3_client(auth_struct)
-    return client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+    return client.list_objects_v2(**kwargs)
