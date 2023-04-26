@@ -134,13 +134,16 @@ class API:
         bucket = path_parts.group(1)
         prefix = path_parts.group(2)
 
-        kwargs = {"bucket": bucket, "prefix": prefix}
+        kwargs = {"Bucket": bucket, "Prefix": prefix}
         keys = []
+        continuation_token = None
         while True:
+            if continuation_token:
+                kwargs["ContinuationToken"] = continuation_token
             objs = list_objects(self.auth, **kwargs)
             keys.extend([obj["Key"] for obj in objs["Contents"]])
             if "NextContinuationToken" in objs:
-                kwargs["ContinuationToken"] = objs["NextContinuationToken"]
+                continuation_token = objs["NextContinuationToken"]
             else:
                 break
         par_s3_download(self.auth, bucket, keys, local_path)
