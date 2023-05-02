@@ -141,11 +141,19 @@ class API:
             if continuation_token:
                 kwargs["ContinuationToken"] = continuation_token
             objs = list_objects(self.auth, **kwargs)
-            keys.extend([obj["Key"] for obj in objs["Contents"]])
-            if "NextContinuationToken" in objs:
-                continuation_token = objs["NextContinuationToken"]
+            # Check if there are files in the bucket, else break
+            if "Contents" in objs:
+                keys.extend([obj["Key"] for obj in objs["Contents"]])
+                # If there is a NextContinuationToken , there are more keys
+                if "NextContinuationToken" in objs:
+                    continuation_token = objs["NextContinuationToken"]
+                else:
+                    break
             else:
                 break
-        par_s3_download(self.auth, bucket, keys, local_path)
-        os.remove(os.path.join(local_path, "complete.json"))
+        # If we have keys, download the files
+        if keys:
+            par_s3_download(self.auth, bucket, keys, local_path)
+            os.remove(os.path.join(local_path, "complete.json"))
+        # If there were no files found , this will be an empty list
         return [os.path.join(local_path, p) for p in sorted(os.listdir(local_path))]
